@@ -13,7 +13,10 @@
 int main(){
 
 	printf("Start program!\n");
-
+	int hex= 0x2 +32;
+	printf("hex=%d\n", hex);
+	char chex= 'A'-0x31;
+	printf("hex=%x\n", chex);
 	FILE *fp;
 	char *machine_code_content;
 	char ch;
@@ -33,33 +36,90 @@ int main(){
 	}
 	machine_code_content[i]='\0';
 	puts(machine_code_content);
-	//tratar informação para novo array com informação-> adress, record type, op code
-//	unsigned char simple_loop[]={
-//
-//	0x7f,0x00,
-//
-//	     0xbf,0x0a,0x00,
-//
-//	0x50,0x03,
-//
-//	0x0f,
-//
-//	0x80,0xf8,
-//
-//	0x22};
-	//when find record type 00 -> put for the array, when find \n go forward 2 index for write correct next opcode
-	//avanço sempre para a 9 posição vejo se a anterior é 1 ou 0, caso seja 1 o record type terminou, se for 0 contiuo a ler
-	//falta ver a condição de paragem
+	// test check sum -> latter for put in on new function -> doesn't work yet
+	int check_sum=0;
+	i=1; // i starts 1 becuase first char is ':'
+	while(machine_code_content[i]!='\0'){
+		if(machine_code_content[i]!='\n'){
+			if(i%2!=0){//odd position MSB
+				if(machine_code_content[i]>='A' && machine_code_content[i]<='F'){
+					if(machine_code_content[i]=='A'){
+						check_sum+=160;
+					}
+					if(machine_code_content[i]=='B'){
+						check_sum+=176;
+					}
+					if(machine_code_content[i]=='C'){
+						check_sum+=192;
+					}
+					if(machine_code_content[i]=='D'){
+						check_sum+=208;
+					}
+					if(machine_code_content[i]=='E'){
+						check_sum+=224;
+					}
+					if(machine_code_content[i]=='F'){
+						check_sum+=240;
+					}
+				}
+				else{
+					if(machine_code_content[i]=='1'){
+						check_sum+=16;
+					}
+					if(machine_code_content[i]=='2'){
+						check_sum+=32;
+					}
+					if(machine_code_content[i]=='3'){
+						check_sum+=48;
+					}
+					if(machine_code_content[i]=='4'){
+						check_sum+=64;
+					}
+					if(machine_code_content[i]=='5'){
+						check_sum+=80;
+					}
+					if(machine_code_content[i]=='6'){
+						check_sum+=96;
+					}
+					if(machine_code_content[i]=='7'){
+						check_sum+=112;
+					}
+					if(machine_code_content[i]=='8'){
+						check_sum+=128;
+					}
+					if(machine_code_content[i]=='9'){
+						check_sum+=144;
+					}
+				}
+			}
+			if(i%2==0){//even position LSB
+				if(machine_code_content[i]>='1' && machine_code_content[i]<='9'){
+					check_sum+=machine_code_content[i]-48; // convert char to int decimal
+				}
+				if(machine_code_content[i]>='A' && machine_code_content[i]<='F'){
+					check_sum+=machine_code_content[i]-0x31; // convert hex char to respective int decimal
+				}
+			}
+			++i;
+		}
+		else{
+			i+=3; // in this else we are positioned at '\n' and the next position is ':' -> so increment 3 times
+		}
+	}
+
+	printf("checksum=%d\n", check_sum);
+	//when find record type 00 -> copy for the array, when find \n go to 2 line for write correct next opcode
+	//check record if record type LSB = '1' when change line
 	char simple_loop_txt[50]={0};
 	int j=0;
 	i=9;
 	while(machine_code_content[i]!='\0'){
 		if(machine_code_content[i]=='\n'){
-			j-=2;
+			j-=2;//go back for copy again in position of record type
 			i+=9;//to record type
-			if(machine_code_content[i]=='1'){//record type -> End Of File
+			if(machine_code_content[i]=='1'){//record type LSB -> End Of File
 				//end while
-				//clean check sum
+				//clean check sum for the array
 				simple_loop_txt[j]=0;
 				simple_loop_txt[++j]=0;
 				break;
@@ -67,8 +127,8 @@ int main(){
 			++i; //go to next op code
 		}
 		simple_loop_txt[j]=machine_code_content[i];
-		++j;
-		++i;
+		++j;//increment simple_loop_txt
+		++i;//increment position code machine
 
 	}
 	puts(simple_loop_txt);
