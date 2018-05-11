@@ -2,7 +2,7 @@
  * main.cpp
  *
  *  Created on: 11/05/2018
- *      Author: aet
+ *      Author: ae
  */
 
 #include <stdio.h>
