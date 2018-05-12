@@ -13,13 +13,9 @@
 int main(){
 
 	printf("Start program!\n");
-	int hex= 0x2 +32;
-	printf("hex=%d\n", hex);
-	char chex= 'A'-0x31;
-	printf("hex=%x\n", chex);
 	FILE *fp;
-	char *machine_code_content;
-	char ch;
+	char *machine_code_content, ch;
+	int array_msb_hex[16]={0,16,32,48,64,80,96,112,128,144,160,176,192,208,224,240};
 
 	fp=fopen("machine_code.txt", "r");
 
@@ -38,58 +34,18 @@ int main(){
 	puts(machine_code_content);
 	// test check sum -> latter for put in on new function -> doesn't work yet
 	int check_sum=0;
-	i=1; // i starts 1 becuase first char is ':'
+	i=1; // i starts 1 because first char is ':'
 	while(machine_code_content[i]!='\0'){
-		if(machine_code_content[i]!='\n'){
+		//when machine code has just one line at the end go to else or is the end line '\n', doesn't add checksum
+		if(machine_code_content[i]!='\n' && machine_code_content[i+2]!='\0' && machine_code_content[i+2]!='\n'){
 			if(i%2!=0){//odd position MSB
 				if(machine_code_content[i]>='A' && machine_code_content[i]<='F'){
-					if(machine_code_content[i]=='A'){
-						check_sum+=160;
-					}
-					if(machine_code_content[i]=='B'){
-						check_sum+=176;
-					}
-					if(machine_code_content[i]=='C'){
-						check_sum+=192;
-					}
-					if(machine_code_content[i]=='D'){
-						check_sum+=208;
-					}
-					if(machine_code_content[i]=='E'){
-						check_sum+=224;
-					}
-					if(machine_code_content[i]=='F'){
-						check_sum+=240;
-					}
+					//go to correspond position array for value MSB hex A...F
+					check_sum+=array_msb_hex[machine_code_content[i]-55];
 				}
 				else{
-					if(machine_code_content[i]=='1'){
-						check_sum+=16;
-					}
-					if(machine_code_content[i]=='2'){
-						check_sum+=32;
-					}
-					if(machine_code_content[i]=='3'){
-						check_sum+=48;
-					}
-					if(machine_code_content[i]=='4'){
-						check_sum+=64;
-					}
-					if(machine_code_content[i]=='5'){
-						check_sum+=80;
-					}
-					if(machine_code_content[i]=='6'){
-						check_sum+=96;
-					}
-					if(machine_code_content[i]=='7'){
-						check_sum+=112;
-					}
-					if(machine_code_content[i]=='8'){
-						check_sum+=128;
-					}
-					if(machine_code_content[i]=='9'){
-						check_sum+=144;
-					}
+					//go to correspond position array for value MSB hex 1...9
+					check_sum+=array_msb_hex[machine_code_content[i]-48];
 				}
 			}
 			if(i%2==0){//even position LSB
@@ -97,24 +53,43 @@ int main(){
 					check_sum+=machine_code_content[i]-48; // convert char to int decimal
 				}
 				if(machine_code_content[i]>='A' && machine_code_content[i]<='F'){
-					check_sum+=machine_code_content[i]-0x31; // convert hex char to respective int decimal
+					check_sum+=machine_code_content[i]-55; // convert hex char to respective int decimal
 				}
 			}
 			++i;
 		}
 		else{
+//			//verify checkSum
+//			//in this moment the check_sum has also add the checksum
+//			--i; // position at MSB checksum and subtract -> before the position was LSB checksum
+//			if(machine_code_content[i]>='A' && machine_code_content[i]<='F'){
+//				//go to correspond position array for value MSB hex A...F
+//				check_sum-=array_msb_hex[machine_code_content[i]-55];
+//			}else{
+//				//go to correspond position array for value MSB hex 1...9
+//				check_sum-=array_msb_hex[machine_code_content[i]-48];
+//			}
+//			++i;//position at LSB checksum and subtract
+//			if(machine_code_content[i]>='1' && machine_code_content[i]<='9'){
+//				check_sum-=machine_code_content[i]-48; // convert char to int decimal
+//			}else if(machine_code_content[i]>='A' && machine_code_content[i]<='F'){
+//				check_sum-=machine_code_content[i]-55; // convert hex char to respective int decimal
+//			}
 			i+=3; // in this else we are positioned at '\n' and the next position is ':' -> so increment 3 times
 		}
+
 	}
 
-	printf("checksum=%d\n", check_sum);
+	printf("checksum=%X\n", check_sum);
 	//when find record type 00 -> copy for the array, when find \n go to 2 line for write correct next opcode
 	//check record if record type LSB = '1' when change line
 	char simple_loop_txt[50]={0};
 	int j=0;
 	i=9;
+	int flag_mcode_one_line=1;
 	while(machine_code_content[i]!='\0'){
 		if(machine_code_content[i]=='\n'){
+			flag_mcode_one_line=0;
 			j-=2;//go back for copy again in position of record type
 			i+=9;//to record type
 			if(machine_code_content[i]=='1'){//record type LSB -> End Of File
@@ -130,6 +105,12 @@ int main(){
 		++j;//increment simple_loop_txt
 		++i;//increment position code machine
 
+	}
+	if(flag_mcode_one_line==1){//for delete checksum, when machine code has just one lie
+		j-=2;//position in checksum
+		//clean check sum for the array
+		simple_loop_txt[j]=0;
+		simple_loop_txt[++j]=0;
 	}
 	puts(simple_loop_txt);
 	return 0;
